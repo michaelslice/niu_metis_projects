@@ -44,7 +44,12 @@ class MetisProjects:
         self.disabled_pis = [] 
         self.active_pis = []
         self.user_ids_and_emails = []
-        
+        self.missing_pi_department = {
+            "piot" : "Physics",
+            "yyin" : "Chemistry & Biochemistry",
+            "hedin" : "Physics"
+        }
+        self.archived_metis_projects = []
         self.pi_and_project_descriptions = {}
         
     def query_and_write_file(self, command, filename)-> str:
@@ -88,7 +93,41 @@ class MetisProjects:
             for element in self.disabled_pis:
                 file.write(element + "\n")
 
-    def write_active_pis(self, filename="./metis_project_groups.txt"):
+    def write_archived_metis_projects(self, filename="./metis_project_groups.txt") -> None:
+        ''''
+        write_archived_metis_projects: Store and write all archived metis projects
+        '''
+        with open(filename, "r") as file:
+            for line in file:
+                
+                # Temp dict to store archived project data
+                metis_projects = {
+                    "project_title": None,
+                    "PI" : None, 
+                    "group_member_count": None 
+                }
+
+                for pi in self.disabled_pis:
+                    if line.startswith(pi):             
+                        line = line.replace(pi + "-members:", "")
+                        line = line.replace(" ", "")
+                        members = line.strip().split(",")
+
+                        metis_projects = {
+                            "project_title": pi,
+                            "PI" : pi, 
+                            "group_member_count": len(members)  
+                        }
+
+                        self.archived_metis_projects.append(metis_projects)
+
+        with open("archived_metis_projects.txt", "w") as file:
+            for value in self.archived_metis_projects:
+                formatted_value = pprint.pformat(value)  
+                file.write(formatted_value + "\n") 
+                file.write("" + "\n")  
+        
+    def write_active_pis(self, filename="./metis_project_groups.txt")->None:
         '''
         write_active_pis: Write all active pis to active_pis.txt
         
@@ -200,7 +239,7 @@ class MetisProjects:
                     if project["project_title"] == project_title:
                         project["group_member_count"] = member_count
         
-    def assign_pi_name_and_department(self):
+    def assign_pi_name_and_department(self)->None:
         '''
         assign_pi_name_and_department: Cross references the PI, with data in metis_users.csv
             to assign the PIs email and department info in active_metis_projects
@@ -240,7 +279,7 @@ class MetisProjects:
                         if(data["PI_name"] == values[0]):
                             data["PI_department"] = values[3]
     
-    def assign_project_descriptions(self):
+    def assign_project_descriptions(self)->None:
         ''''
         assign_project_descriptions:
         '''
@@ -291,11 +330,10 @@ class MetisProjects:
         
         return consecutive_pi_lines
 
-    def pis_and_projects(self, filename="./metis_project_description.txt")->None:
+    def pis_and_projects(self, filename="./metis_project_description.txt") -> None:
         '''
         pis_and_projects: Retrieves the data for PIs and the projects they are working on
         '''
-        
         current_pi = None
 
         with open(filename, "r") as file:
@@ -309,35 +347,38 @@ class MetisProjects:
                     
                 # Append the PI
                 if line.startswith('description: PI='):
-                    
                     current_pi = line[len('description: PI='):].strip()
-                
-                    # Insert the PI 
+                    
+                    # Ensure PI is in the dictionary
                     if current_pi not in self.pi_and_project_descriptions:
-                        
-                        # Assign no description to the current PI
                         self.pi_and_project_descriptions[current_pi] = []
 
                 # Append the description for the PI
-                # If current line is a description and previous line was a PI
                 elif line.startswith('description: DESCRIPTION=') and current_pi is not None:
                     description = line[len('description: DESCRIPTION='):].strip()
                     
-                    # Append the description for the PI on the previous line
-                    self.pi_and_project_descriptions[current_pi].append(description)
+                    # Only add the description if it's not already in the list
+                    if description not in self.pi_and_project_descriptions[current_pi]:
+                        self.pi_and_project_descriptions[current_pi].append(description)
                 
-                # Handle scenario where a project description appears 
-                elif not line.startswith('description:') and current_pi is not None and line:
+                # Handle scenario where a project description appears on a new line
+                elif not line.startswith('description:') and current_pi is not None and line.strip():
                     if self.pi_and_project_descriptions[current_pi]:
-                        self.pi_and_project_descriptions[current_pi][-1] += ' ' + line                        
-            
+                        last_description = self.pi_and_project_descriptions[current_pi][-1]
+
+                        # Avoid adding duplicates caused by multi-line descriptions
+                        updated_description = last_description + ' ' + line.strip()
+                        
+                        # Update last description if it hasn't changed, otherwise append
+                        if updated_description not in self.pi_and_project_descriptions[current_pi]:
+                            self.pi_and_project_descriptions[current_pi][-1] = updated_description
+
     def pis_missing_description_helper(self)->None:
         ''''
         pis_missing_description_helper: Handles PIs that have missing descriptions 
             and assigns them the correct project descriptions
         '''
         pi_no_description = []
-            
         consecutive_pi_lines = self.consecutive_pi_lines_helper()
             
         for element, description in self.pi_and_project_descriptions.items():
@@ -356,30 +397,28 @@ class MetisProjects:
                 
                 # Check if PI in consecutive groups
                 if element in group:
-                    
+                        
                         # If the PI has a missing description assign
                         # them all the projects of their last group member        
                         self.pi_and_project_descriptions[element].append(self.pi_and_project_descriptions[group[len(group) - 1]])
-     
-        # for pi, project_description in self.pi_and_project_descriptions.items():
-        #     for project_data in self.active_metis_projects:          
-        #         if pi == project_data["PI"]:
-        #             project_data["description"] = project_description
-                      
-    def fetch_active_metis_projects(self):
+                
+    def resolve_pi_department_discrepancy(self)->None:
+        ''''
+        resolve_pi_department_discrepancy: In the data we are working with some PIs
+            department data is not found, this function resolves this problme
+        '''
+        for project in self.active_metis_projects:
+            if project["PI"] in self.missing_pi_department:
+                project_pi = project["PI"]
+                project["PI_department"] = self.missing_pi_department[project_pi]
+                
+    def fetch_active_metis_projects(self)->None:
         '''
         fetch_active_metis_projects: Read the contents of the file and sort its contents
 
         filename: The file contents to be read
         '''
 
-        # Stores all Disabled PI's and their projects
-        archived_metis_projects = {
-            "project_title": None,
-            "PI" : None, 
-            "group_member_count": None 
-        }
-        
         # Extract the PI and team member names that correspond to each project
         extracted_data = self.extract_project_pi_and_members()
         
@@ -397,26 +436,31 @@ class MetisProjects:
         
         # Check for any missing PI descriptions 
         self.pis_missing_description_helper()
+        
+        # Resolve PI missing department problem
+        self.resolve_pi_department_discrepancy()
+        
+        # Write all archived metis projects
+        self.write_archived_metis_projects()
 
-    def debug_active_metis_users(self):
+    def write_active_metis_projects(self, data, filename)->None:
+        ''''
+        write_active_metis_projects: Write the active metis project data to filename
+        ''' 
+        with open(filename, "w") as file:
+            for value in data:
+                formatted_value = pprint.pformat(value)  
+                file.write(formatted_value + "\n") 
+                file.write("" + "\n")  
+           
+    def write_pis_and_project_descriptions(self, data, filename)->None:
+        ''''
+        write_pis_and_project_descriptions: Write the pis and their project descriptions to filename
         '''
-        debug: For debugging purposes
-            
-        PI
-        PI_department
-        PI_email
-        PI_name
-        description
-        group_member_count
-        project_title
-        '''
-        for value in self.active_metis_projects:
-            pprint.pprint(value)
-            print("")
-
-    def debug_pis_and_project_descriptions(self):
-        pprint.pprint(self.pi_and_project_descriptions)
-
+        with open(filename, "w") as file:
+            for pi, descriptions in data.items():
+                formatted_data = f"{pi}:\n{pprint.pformat(descriptions, indent=4)}\n\n"
+                file.write(formatted_data) 
                                 
 def main():
     '''
@@ -448,13 +492,11 @@ def main():
     # Get PIs and their projects
     metis_projects.pis_and_projects(filename="./metis_project_description.txt")
 
-    # View all active projects on Metis
-    metis_projects.debug_active_metis_users()
+    # Write the active metis projects data
+    metis_projects.write_active_metis_projects(metis_projects.active_metis_projects, "./web_metis_project_data.txt")
     
-    # View all PIs and their project descriptions
-    # metis_projects.debug_pis_and_project_descriptions()
-    
-
+    # Write the PIs and their project descriptions
+    metis_projects.write_pis_and_project_descriptions(metis_projects.pi_and_project_descriptions, "./web_metis_pi_project_descriptions.txt")
 
 if __name__ == "__main__":
     '''
