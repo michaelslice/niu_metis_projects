@@ -12,7 +12,7 @@ Flow of program
 1. A file is created for project descriptions on Metis, and Metis project groups(pis, and members)
 
 2. Metis projects are stored in the list `active_metis_projects` which contains dictionarys that includes the following
-   -"project_title"     : Project title found in the file "metis_project_groups.txt"
+   -"group_title"       : Group title found in the file "metis_project_groups.txt"
    -"PI                 : PIs unique identifier
    -"group_member_count": Quantity of group members 
    -"PI_name"           : PIs name
@@ -37,7 +37,7 @@ class MetisProjects:
         # Stores all active PI's and their projects
         # active_metis_projects is a list of dictionaries
         # where each dictionary contains information for
-        # - project_title
+        # - group_title
         # - PI
         # - group_member_count
         self.active_metis_projects = []    
@@ -102,7 +102,7 @@ class MetisProjects:
                 
                 # Temp dict to store archived project data
                 metis_projects = {
-                    "project_title": None,
+                    "group_title": None,
                     "PI" : None, 
                     "group_member_count": None 
                 }
@@ -114,7 +114,7 @@ class MetisProjects:
                         members = line.strip().split(",")
 
                         metis_projects = {
-                            "project_title": pi,
+                            "group_title": pi,
                             "PI" : pi, 
                             "group_member_count": len(members)  
                         }
@@ -221,7 +221,7 @@ class MetisProjects:
             # Evaluate PI lines
             if key.endswith("-pi"):
                 project = {
-                    "project_title": key[:-3],
+                    "group_title": key[:-3],
                     "PI" : value, 
                     "group_member_count": None,
                     "PI_name": None,
@@ -232,11 +232,11 @@ class MetisProjects:
                 self.active_metis_projects.append(project)
             
             if key.endswith("-members"):
-                project_title = key[:-8]
+                group_title = key[:-8]
 
                 member_count = len(value.split(","))
                 for project in self.active_metis_projects:
-                    if project["project_title"] == project_title:
+                    if project["group_title"] == group_title:
                         project["group_member_count"] = member_count
         
     def assign_pi_name_and_department(self)->None:
