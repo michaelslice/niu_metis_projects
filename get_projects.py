@@ -460,8 +460,35 @@ class MetisProjects:
         with open(filename, "w") as file:
             for pi, descriptions in data.items():
                 formatted_data = f"{pi}:\n{pprint.pformat(descriptions, indent=4)}\n\n"
-                file.write(formatted_data) 
-                                
+                file.write(formatted_data)
+                
+    def write_web_metis_project_data(self, filename="web_project_html.txt")->None:
+        '''
+        write_web_metis_project_data: Iterate through the project data and format as html data
+        ''' 
+        with open(filename, "w") as file:
+            for group in self.active_metis_projects:
+                
+                # Capitalize first letter of group title
+                group_title = str(group['group_title']).capitalize()
+                
+                # Embed the project data within html
+                group_as_html = f""" 
+                    <div class="project">
+                        <h2> { group_title } </h2> 
+                        <p>  PI Name: { group['PI_name'] } </p>
+                        <p>  PI Department: { group['PI_department'] } </p>
+                        <p>  Number of Group Members: { group['group_member_count'] } </p>
+                    </div>
+                """
+                # Write the html formatted data
+                file.write(group_as_html)
+                
+        # Copy the formatted html to the public directory
+        copy_html_to_public = subprocess.run(
+            ["cp", "./web_project_html.txt", "/var/www/html/pub/metis_projects"]
+        )   
+                                     
 def main():
     '''
     main: A script to get the active projects on Metis
@@ -497,6 +524,9 @@ def main():
     
     # Write the PIs and their project descriptions
     metis_projects.write_pis_and_project_descriptions(metis_projects.pi_and_project_descriptions, "./web_metis_pi_project_descriptions.txt")
+    
+    # Write the project data as html data
+    metis_projects.write_web_metis_project_data()
 
 if __name__ == "__main__":
     '''
