@@ -461,29 +461,67 @@ class MetisProjects:
             for pi, descriptions in data.items():
                 formatted_data = f"{pi}:\n{pprint.pformat(descriptions, indent=4)}\n\n"
                 file.write(formatted_data)
-                
+    
+    def valid_project_count(self)->int:
+        '''
+        valid_project_count: Return the number of projects without 'None' entries
+        
+        '''
+        project_count: int = 0
+        
+        for group in self.active_metis_projects:
+            if group['PI_name'] is None or \
+                group['PI_department'] is None or \
+                group['PI_department'] == "" or \
+                group["group_member_count"] is None or \
+                group['description'] == "No description found":
+                continue
+            else:  
+                project_count += 1
+            
+        return project_count
+    
     def write_web_metis_project_data(self, filename="web_project_html.txt")->None:
         '''
         write_web_metis_project_data: Iterate through the project data and format as html data
         ''' 
         with open(filename, "w") as file:
+            
+            file.write(f"""
+                <div class="top-text">
+                    <h1>CRCD Supported Research Projects</h1>
+                    <h1>Total Number of Active Research Projects: #{self.valid_project_count()}</h1>
+                </div>   
+                <div class="inner-body">               
+            """)
+            
             for group in self.active_metis_projects:
                 
-                # Capitalize first letter of group title
-                group_title = str(group['group_title']).capitalize()
+                if group['PI_name'] is None or \
+                   group['PI_department'] is None or \
+                    group['PI_department'] == "" or \
+                   group["group_member_count"] is None or \
+                   group['description'] == "No description found":
+                    continue
                 
-                # Embed the project data within html
-                group_as_html = f""" 
-                    <div class="project">
-                        <h2> { group_title } </h2> 
-                        <p>  PI Name: { group['PI_name'] } </p>
-                        <p>  PI Department: { group['PI_department'] } </p>
-                        <p>  Number of Group Members: { group['group_member_count'] } </p>
-                    </div>
-                """
-                # Write the html formatted data
-                file.write(group_as_html)
-                
+                else:    
+                    # Capitalize first letter of group title
+                    group_title = str(group['group_title']).upper()
+                    
+                    # Embed the project data within html
+                    group_as_html = f""" 
+                        <div class="project">
+                            <h2> { group_title } </h2> 
+                            <p>  { group['PI_name'] } ({ group['PI_department'] })</p>
+                            <p><i>{ group['description'] }</i></p>
+                            <p>  Group Members: { group['group_member_count'] } </p>
+                        </div>
+                    """
+                    # Write the html formatted data
+                    file.write(group_as_html)
+        
+            file.write("</div>")
+          
         # Copy the formatted html to the public directory
         copy_html_to_public = subprocess.run(
             ["cp", "./web_project_html.txt", "/var/www/html/pub/metis_projects"]
