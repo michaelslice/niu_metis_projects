@@ -489,8 +489,8 @@ class MetisProjects:
             
             file.write(f"""
                 <div class="top-text">
-                    <h1>CRCD Supported Research Projects</h1>
-                    <h1>Total Number of Active Research Projects: #{self.valid_project_count()}</h1>
+                    <h2 class="header-text">CRCD Supported Research Projects</h2>
+                    <h2 class="header-text">Total Number of Active Research Projects: {self.valid_project_count()}</h2>
                 </div>   
                 <div class="inner-body">               
             """)
