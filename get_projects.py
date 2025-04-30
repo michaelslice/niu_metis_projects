@@ -49,8 +49,13 @@ class MetisProjects:
             "yyin" : "Chemistry & Biochemistry",
             "hedin" : "Physics"
         }
+        self.project_descriptions = {
+            "BIOS441" : "Hands-on experience with bioinformatics tools for database searches, sequence alignment, phylogeny, protein structure/function analysis, motif prediction, and next-gen sequencing.",
+            "BIOS641" : "Hands-on experience using bioinformatics software for applications that include database searches, sequence alignment, phylogeny building, protein structure analysis, protein function annotation, regulatory motif prediction, and next generation sequence analysis.",
+        }
         self.archived_metis_projects = []
         self.pi_and_project_descriptions = {}
+        self.black_list_projects = []
         
     def query_and_write_file(self, command, filename)-> str:
         '''
@@ -204,7 +209,7 @@ class MetisProjects:
                     extracted_data[key] = value.strip()
 
         return extracted_data
-    
+     
     def assign_project_data(self, extracted_project_data)->None:
         ''''
         assign_project_data: Handles the extracted PI and team members 
@@ -217,7 +222,7 @@ class MetisProjects:
         # key:   groupname-pi, or groupname-members
         # value: Either the PI name or names of the group members
         for key, value in extracted_project_data.items():
-
+            
             # Evaluate PI lines
             if key.endswith("-pi"):
                 project = {
@@ -227,18 +232,22 @@ class MetisProjects:
                     "PI_name": None,
                     "PI_department": None,
                     "PI_email": None,
-                    "description": None
+                    "description": None,
+                    "group_members": None,
+                    "pi_last_login":  None
                 }
                 self.active_metis_projects.append(project)
-            
+                        
             if key.endswith("-members"):
                 group_title = key[:-8]
-
+                group_members = value
                 member_count = len(value.split(","))
+                
                 for project in self.active_metis_projects:
                     if project["group_title"] == group_title:
                         project["group_member_count"] = member_count
-        
+                        project["group_members"] = group_members
+
     def assign_pi_name_and_department(self)->None:
         '''
         assign_pi_name_and_department: Cross references the PI, with data in metis_users.csv
@@ -278,6 +287,27 @@ class MetisProjects:
                     if data["PI_department"] == "":
                         if(data["PI_name"] == values[0]):
                             data["PI_department"] = values[3]
+    
+    def get_pi_last_log(self, pi_email, filename="/opt/metis/el8/contrib/accounting/metis_active_users_and_pis/metis_pi_lastlog.csv")->str:
+        '''
+        get_pi_last_log: Iterate through metis_pi_lastlog.csv, and return the PIs last login date
+        '''
+        with open(filename, "r") as file:
+            for line in file:                
+                line = line.split(",")
+                
+                if str(pi_email).strip() == str(line[1]).strip():
+                    last_login = line[2] 
+                    return last_login.strip()  
+    
+    def assign_pi_last_log(self)->None:
+        '''
+        assign_pi_last_log: Add the PIs last log to the PIs group
+        '''
+        for project in self.active_metis_projects:
+            if project["PI"] in self.active_pis:
+                pi_last_log = self.get_pi_last_log(pi_email=project["PI_email"])
+                project["pi_last_login"] = pi_last_log
     
     def assign_project_descriptions(self)->None:
         ''''
@@ -442,6 +472,9 @@ class MetisProjects:
         
         # Write all archived metis projects
         self.write_archived_metis_projects()
+        
+        # Get the PIs last login
+        self.assign_pi_last_log()
 
     def write_active_metis_projects(self, data, filename)->None:
         ''''
@@ -475,6 +508,9 @@ class MetisProjects:
                 group['PI_department'] == "" or \
                 group["group_member_count"] is None or \
                 group['description'] == "No description found":
+            
+                # If any None entries, it is considered a "black list" project
+                self.black_list_projects.append(group)
                 continue
             else:  
                 project_count += 1
@@ -489,7 +525,7 @@ class MetisProjects:
             
             file.write(f"""
                 <div class="top-text">
-                    <h2 class="header-text">CRCD Supported Research Projects</h2>
+                    <h1 class="header-text">CRCD Supported Research Projects</h1>
                     <h2 class="header-text">Total Number of Active Research Projects: {self.valid_project_count()}</h2>
                 </div>   
                 <div class="inner-body">               
@@ -521,7 +557,6 @@ class MetisProjects:
                     file.write(group_as_html)
         
             file.write("</div>")
-          
         # Copy the formatted html to the public directory
         copy_html_to_public = subprocess.run(
             ["cp", "./web_project_html.txt", "/var/www/html/pub/metis_projects"]
