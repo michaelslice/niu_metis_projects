@@ -253,7 +253,7 @@ class MetisProjects:
         assign_pi_name_and_department: Cross references the PI, with data in metis_users.csv
             to assign the PIs email and department info in active_metis_projects
         '''
-        with open("../metis_active_users_and_pis/metis_users.csv", "r") as file:
+        with open("/opt/metis/el8/contrib/accounting/metis_active_users_and_pis/metis_users.csv", "r") as file:
             for line in file:
                 pid = ""
                 pi_name = ""
@@ -280,7 +280,7 @@ class MetisProjects:
                                 project["PI_name"] = pi_name
                                 project["PI_department"] = pi_department
         
-        with open("../metis_active_users_and_pis/metis_pis.csv", "r") as file:
+        with open("/opt/metis/el8/contrib/accounting/metis_active_users_and_pis/metis_pis.csv", "r") as file:
             for line in file:
                 values = line.split(",")
                 for data in self.active_metis_projects:
