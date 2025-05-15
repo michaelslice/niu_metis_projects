@@ -32,14 +32,10 @@ class MetisProjects:
     
     def __init__(self):
         '''
-        __init__: Constructor for MetisProjects
+        Constructor for MetisProjects
         '''
+        
         # Stores all active PI's and their projects
-        # active_metis_projects is a list of dictionaries
-        # where each dictionary contains information for
-        # - group_title
-        # - PI
-        # - group_member_count
         self.active_metis_projects = []    
         self.disabled_pis = [] 
         self.active_pis = []
@@ -49,17 +45,37 @@ class MetisProjects:
             "yyin" : "Chemistry & Biochemistry",
             "hedin" : "Physics"
         }
-        self.project_descriptions = {
-            "BIOS441" : "Hands-on experience with bioinformatics tools for database searches, sequence alignment, phylogeny, protein structure/function analysis, motif prediction, and next-gen sequencing.",
-            "BIOS641" : "Hands-on experience using bioinformatics software for applications that include database searches, sequence alignment, phylogeny building, protein structure analysis, protein function annotation, regulatory motif prediction, and next generation sequence analysis.",
+        self.updated_project_descriptions = {
+            "AML" : "The AML project is for research in machine learning, federated learning and optimization.",
+            "ATLAS" : "The ATLAS group searches for new particles beyond the Standard Model, focusing on final states with multiple heavy quarks.",
+            "AVLAB" : "Analyzing large spatial datasets to understand the factors affecting US Hospitals' success requires considering a very detailed spatial context for each health facility.",
+            "AVLAB2" : "The study of how participants of a federated fine-tuning regime can achieve an equilibrium, where every member is sufficiently incentivized to participate.",
+            "LINLAB" : "LINLAB is a NIU research team that works on the quadruped robots as guide dogs for the visually impaired population.",
+            "PCT" : "The pcT (proton computed Tomography) project focuses on reconstructing 3D tomographic medical images using protons. These high-resolution images are used to support post-diagnosis, proton-based cancer treatment by improving the accuracy of proton dose delivery. Innovations from the pcT project have led to four U.S. patents and five international patents.",
+            "PRAD" : "The PRAD (Proton Radiography) project is dedicated to reconstructing 2D radiographic medical images using protons. These images play a vital role in post-diagnosis, proton-based cancer treatment by enhancing treatment planning and verification. Innovations from the PRAD project have contributed to four U.S. patents and five international patents.",
+            "REDCAP" : "REDCap is a secure web platform for building and managing online databases and surveys. It is available to NIU faculty, staff, and students for use in research projects.",
+            "ZWLAB" : "Developing iGAIT a smartphone-based tool that uses machine learning and video gait analysis to help detect early signs of autism in children."
         }
-        self.archived_metis_projects = []
+        self.archived_metis_projects = [
+            "chem600s2017",
+            "aard",
+            "cmodel",
+            "fast",
+            "hedin",
+            "jahreda",
+            "npohlman",
+            "piot",
+            "ritelab",
+            "syphers",
+            "resx",
+            "bios641"
+        ]
         self.pi_and_project_descriptions = {}
         self.black_list_projects = []
         
     def query_and_write_file(self, command, filename)-> str:
         '''
-        query_and_write_file: Run a comand and write the results to a file
+        Run a comand and write the results to a file
 
         command: Command to be executed
         filename: File to be written to
@@ -78,7 +94,7 @@ class MetisProjects:
 
     def write_disabled_pis(self, filename="./metis_project_groups.txt")->None:
         '''
-        write_disabled_pis: Write all disabled pis to disabled_pis.txt
+        Write all disabled pis to disabled_pis.txt
         
         filename: The file to read the data from
         '''
@@ -100,7 +116,7 @@ class MetisProjects:
 
     def write_archived_metis_projects(self, filename="./metis_project_groups.txt") -> None:
         ''''
-        write_archived_metis_projects: Store and write all archived metis projects
+        Store and write all archived metis projects
         '''
         with open(filename, "r") as file:
             for line in file:
@@ -134,7 +150,7 @@ class MetisProjects:
         
     def write_active_pis(self, filename="./metis_project_groups.txt")->None:
         '''
-        write_active_pis: Write all active pis to active_pis.txt
+        Write all active pis to active_pis.txt
         
         filename: The file
         '''
@@ -170,8 +186,8 @@ class MetisProjects:
             
     def extract_project_pi_and_members(self, filename="./metis_project_groups.txt")->dict:
         ''''
-        project_pi_and_members: This function leverages a regex expression to read the file
-            to captures the PI and group members for a project on Metis
+        This function leverages a regex expression to read the file
+        to captures the PI and group members for a project on Metis
         
         filename: The file to read from
         '''
@@ -212,8 +228,8 @@ class MetisProjects:
      
     def assign_project_data(self, extracted_project_data)->None:
         ''''
-        assign_project_data: Handles the extracted PI and team members 
-            and appends the project data to active_metis_projects
+        Handles the extracted PI and team members 
+        and appends the project data to active_metis_projects
         
         extracted_project_data: The extracted project data read from the file
         '''
@@ -250,8 +266,8 @@ class MetisProjects:
 
     def assign_pi_name_and_department(self)->None:
         '''
-        assign_pi_name_and_department: Cross references the PI, with data in metis_users.csv
-            to assign the PIs email and department info in active_metis_projects
+        Cross references the PI, with data in metis_users.csv
+        to assign the PIs email and department info in active_metis_projects
         '''
         with open("/opt/metis/el8/contrib/accounting/metis_active_users_and_pis/metis_users.csv", "r") as file:
             for line in file:
@@ -290,7 +306,7 @@ class MetisProjects:
     
     def get_pi_last_log(self, pi_email, filename="/opt/metis/el8/contrib/accounting/metis_active_users_and_pis/metis_pi_lastlog.csv")->str:
         '''
-        get_pi_last_log: Iterate through metis_pi_lastlog.csv, and return the PIs last login date
+        Iterate through metis_pi_lastlog.csv, and return the PIs last login date
         '''
         with open(filename, "r") as file:
             for line in file:                
@@ -302,7 +318,7 @@ class MetisProjects:
     
     def assign_pi_last_log(self)->None:
         '''
-        assign_pi_last_log: Add the PIs last log to the PIs group
+        Add the PIs last log to the PIs group
         '''
         for project in self.active_metis_projects:
             if project["PI"] in self.active_pis:
@@ -311,7 +327,7 @@ class MetisProjects:
     
     def assign_project_descriptions(self)->None:
         ''''
-        assign_project_descriptions:
+        Assign the group their project description
         '''
         # This code is problamatic because 
         # multiple PIs can be on 1 project
@@ -337,8 +353,8 @@ class MetisProjects:
     
     def consecutive_pi_lines_helper(self, filename="./metis_project_description.txt")->list:
         ''''
-        consecutive_pi_lines: Helper function to identify consecutive lines where 
-            multiple PIs are assigned to 1 or more projects
+        Helper function to identify consecutive lines where 
+        multiple PIs are assigned to 1 or more projects
         '''
         current_group = []         # Temp list to hold a single group of consecutive PI lines
         consecutive_pi_lines = []  # List to store groups of consecutive PI lines
@@ -362,7 +378,7 @@ class MetisProjects:
 
     def pis_and_projects(self, filename="./metis_project_description.txt") -> None:
         '''
-        pis_and_projects: Retrieves the data for PIs and the projects they are working on
+        Retrieves the data for PIs and the projects they are working on
         '''
         current_pi = None
 
@@ -405,8 +421,8 @@ class MetisProjects:
 
     def pis_missing_description_helper(self)->None:
         ''''
-        pis_missing_description_helper: Handles PIs that have missing descriptions 
-            and assigns them the correct project descriptions
+        Handles PIs that have missing descriptions 
+        and assigns them the correct project descriptions
         '''
         pi_no_description = []
         consecutive_pi_lines = self.consecutive_pi_lines_helper()
@@ -428,14 +444,14 @@ class MetisProjects:
                 # Check if PI in consecutive groups
                 if element in group:
                         
-                        # If the PI has a missing description assign
-                        # them all the projects of their last group member        
-                        self.pi_and_project_descriptions[element].append(self.pi_and_project_descriptions[group[len(group) - 1]])
+                    # If the PI has a missing description assign
+                    # them all the projects of their last group member        
+                    self.pi_and_project_descriptions[element].append(self.pi_and_project_descriptions[group[len(group) - 1]])
                 
     def resolve_pi_department_discrepancy(self)->None:
         ''''
-        resolve_pi_department_discrepancy: In the data we are working with some PIs
-            department data is not found, this function resolves this problme
+        In the data we are working with some PIs
+        department data is not found, this function resolves this problme
         '''
         for project in self.active_metis_projects:
             if project["PI"] in self.missing_pi_department:
@@ -444,7 +460,7 @@ class MetisProjects:
                 
     def fetch_active_metis_projects(self)->None:
         '''
-        fetch_active_metis_projects: Read the contents of the file and sort its contents
+        Read the contents of the file and sort its contents
 
         filename: The file contents to be read
         '''
@@ -478,7 +494,7 @@ class MetisProjects:
 
     def write_active_metis_projects(self, data, filename)->None:
         ''''
-        write_active_metis_projects: Write the active metis project data to filename
+        Write the active metis project data to filename
         ''' 
         with open(filename, "w") as file:
             for value in data:
@@ -488,7 +504,7 @@ class MetisProjects:
            
     def write_pis_and_project_descriptions(self, data, filename)->None:
         ''''
-        write_pis_and_project_descriptions: Write the pis and their project descriptions to filename
+        Write the pis and their project descriptions to filename
         '''
         with open(filename, "w") as file:
             for pi, descriptions in data.items():
@@ -497,7 +513,7 @@ class MetisProjects:
     
     def valid_project_count(self)->int:
         '''
-        valid_project_count: Return the number of projects without 'None' entries
+        Return the number of projects without 'None' entries
         
         '''
         project_count: int = 0
@@ -507,7 +523,9 @@ class MetisProjects:
                 group['PI_department'] is None or \
                 group['PI_department'] == "" or \
                 group["group_member_count"] is None or \
-                group['description'] == "No description found":
+                group['description'] == "No description found" or \
+                group["group_title"] in self.archived_metis_projects or \
+                group["group_title"] in self.archived_metis_projects:
             
                 # If any None entries, it is considered a "black list" project
                 self.black_list_projects.append(group)
@@ -517,6 +535,16 @@ class MetisProjects:
             
         return project_count
     
+    def update_project_descriptions(self)->None:
+        '''
+        Iterate through active_metis_projects, and update all projects with their most recent description
+        '''
+        for group in self.active_metis_projects:
+            group_title = str(group["group_title"]).upper()
+
+            if group_title in self.updated_project_descriptions:
+                group["description"] = self.updated_project_descriptions[group_title]
+
     def write_web_metis_project_data(self, filename="web_project_html.txt")->None:
         '''
         write_web_metis_project_data: Iterate through the project data and format as html data
@@ -537,7 +565,8 @@ class MetisProjects:
                    group['PI_department'] is None or \
                     group['PI_department'] == "" or \
                    group["group_member_count"] is None or \
-                   group['description'] == "No description found":
+                   group['description'] == "No description found" or \
+                   group["group_title"] in self.archived_metis_projects:
                     continue
                 
                 else:    
@@ -598,6 +627,9 @@ def main():
     # Write the PIs and their project descriptions
     metis_projects.write_pis_and_project_descriptions(metis_projects.pi_and_project_descriptions, "./web_metis_pi_project_descriptions.txt")
     
+    # Update Metis projects with the most recent project descriptions
+    metis_projects.update_project_descriptions()
+
     # Write the project data as html data
     metis_projects.write_web_metis_project_data()
 
